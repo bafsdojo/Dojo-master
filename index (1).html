@@ -1,0 +1,649 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Be a Dojo Master</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: 'Bai Jamjuree', Arial, sans-serif;
+            background-color: #f3ecdc;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+        [lang="zh-Hant"] {
+            font-family: "Noto Sans TC", Arial, sans-serif;
+        }
+        h1 {
+            font-size: 1.5em;
+            text-align: center;
+            margin: 10px 0;
+            color: #e68434;
+        }
+        #instruction-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 20;
+            justify-content: center;
+            align-items: center;
+        }
+        #instruction-modal .modal-content {
+            background-color: #ca3c14;
+            color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 80%;
+            text-align: center;
+            font-size: 1em;
+            line-height: 1.5;
+        }
+        #instruction-modal .modal-content p {
+            margin: 10px 0;
+        }
+        #continue-button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: #f3ecdc;
+            color: #ca3c14;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+        }
+        #continue-button:hover {
+            background-color: #e0d9c8;
+        }
+        #game-container {
+            display: none;
+            justify-content: space-around;
+            width: 100%;
+            max-width: 360px;
+            margin: 10px 0;
+        }
+        .hole {
+            width: 120px;
+            height: 120px;
+            background-color: #8B4513;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            user-select: none;
+        }
+        .marker {
+            width: 100px;
+            height: 100px;
+            background-size: cover;
+            position: absolute;
+            bottom: -100px;
+            left: 10px;
+            transition: bottom 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .marker.up {
+            bottom: 0;
+        }
+        .marker.normal {
+            background-image: none;
+        }
+        .marker.party {
+            background-image: url('https://i.postimg.cc/QtMRrv0t/sumo-K-O.png');
+        }
+        .marker.playful {
+            background-image: url('https://i.postimg.cc/MH3ZSy7k/sumo.png');
+        }
+        #score {
+            font-size: 1em;
+            background-color: #fff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin: 5px;
+        }
+        #start-image {
+            width: 288px;
+            height: auto;
+            cursor: pointer;
+            border-radius: 5px;
+            margin: 5px auto;
+            transition: opacity 0.2s;
+        }
+        #start-image.start-image-results {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            width: 90px;
+            margin: 0;
+        }
+        #start-image:hover {
+            opacity: 0.8;
+        }
+        #start-image:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        #end-image {
+            width: 40px;
+            height: auto;
+            cursor: pointer;
+            border-radius: 5px;
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            display: none;
+            transition: opacity 0.2s;
+            z-index: 10;
+        }
+        #end-image:hover {
+            opacity: 0.8;
+        }
+        #end-image:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        #item-display {
+            display: none;
+            font-size: 1em;
+            margin: 10px 0;
+            background-color: #fff;
+            padding: 8px;
+            border-radius: 5px;
+            width: 100%;
+            max-width: 320px;
+            text-align: center;
+            overflow-wrap: break-word;
+        }
+        #hole1::before {
+            content: 'Dr.';
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1em;
+            font-weight: bold;
+        }
+        #hole2::before {
+            content: 'Cr.';
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1em;
+            font-weight: bold;
+        }
+        #results-container {
+            display: none;
+            width: 100%;
+            max-width: 360px;
+            margin-top: 10px;
+        }
+        #correct-answers, #wrong-answers {
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            overflow-y: auto;
+            max-height: 300px;
+            flex: 1;
+        }
+        #correct-answers {
+            margin-right: 5px;
+        }
+        #wrong-answers {
+            margin-left: 5px;
+        }
+        #correct-answers h3, #wrong-answers h3 {
+            margin: 0 0 5px;
+            font-size: 1em;
+        }
+        #correct-answers ul, #wrong-answers ul {
+            list-style-type: decimal;
+            padding-left: 20px;
+            margin: 0;
+        }
+        #correct-answers li, #wrong-answers li {
+            margin: 3px 0;
+        }
+        #mallet {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background-image: url('https://img.icons8.com/color/50/hammer.png');
+            background-size: cover;
+            pointer-events: none;
+            transition: transform 0.1s;
+            z-index: 10;
+            display: none;
+        }
+        #end-message {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #e68434;
+            text-align: center;
+            margin-top: 10px;
+            margin-left: 120px;
+            display: none;
+        }
+        #logo-container {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            z-index: 5;
+        }
+        #logo {
+            width: 90px;
+            height: auto;
+        }
+        @media (max-width: 360px) {
+            .hole {
+                width: 100px;
+                height: 100px;
+            }
+            .marker {
+                width: 80px;
+                height: 80px;
+                left: 10px;
+            }
+            #game-container {
+                max-width: 300px;
+            }
+            #item-display {
+                max-width: 280px;
+            }
+            #results-container {
+                max-width: 300px;
+            }
+            #correct-answers, #wrong-answers {
+                max-height: 300px;
+            }
+            #correct-answers ul, #wrong-answers ul {
+                padding-left: 15px;
+            }
+            #start-image {
+                width: 240px;
+            }
+            #start-image.start-image-results {
+                width: 75px;
+            }
+            #end-image {
+                width: 30px;
+            }
+            #logo {
+                width: 72px;
+            }
+            #instruction-modal .modal-content {
+                max-width: 90%;
+                padding: 15px;
+                font-size: 0.9em;
+            }
+            #continue-button {
+                padding: 8px 15px;
+                font-size: 0.9em;
+            }
+            #end-message {
+                margin-left: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="instruction-modal">
+        <div class="modal-content">
+            <p>Welcome to BAFS DOJO!<br>In here, only the strongest survives.<br><br>You'll see 2 circles:<br>left for Dr. and right for Cr.<br>An accounting item will appear<br>— use the hammer to beat<br>the sumo wrestler!<br><br>Practice makes perfect!<br>Master Debits and Credits with fun!<br>Be a true Master!</p>
+            <button id="continue-button">Continue</button>
+        </div>
+    </div>
+    <h1>Be a Dojo Master</h1>
+    <div id="score">Score: 0 / 0</div>
+    <img id="start-image" src="https://i.postimg.cc/MH3ZSy7k/sumo.png" alt="Start Game - Undefeated Sumo">
+    <img id="end-image" src="https://i.postimg.cc/xj58BDFM/exit.webp" alt="End Game">
+    <div id="item-display"></div>
+    <div id="game-container">
+        <div class="hole" id="hole1">
+            <div class="marker normal" id="marker1"></div>
+        </div>
+        <div class="hole" id="hole2">
+            <div class="marker normal" id="marker2"></div>
+        </div>
+    </div>
+    <div id="results-container">
+        <div id="correct-answers">
+            <h3></h3>
+            <ul id="correct-answers-list"></ul>
+        </div>
+        <div id="wrong-answers">
+            <h3></h3>
+            <ul id="wrong-answers-list"></ul>
+        </div>
+    </div>
+    <div id="mallet"></div>
+    <div id="end-message">Nice Try!</div>
+    <div id="logo-container">
+        <img id="logo" src="https://i.postimg.cc/0yMN6650/bafs-dojo.jpg" alt="BAFS Dojo Logo">
+    </div>
+
+    <script>
+        const items = [
+            { name: "Administrative expenses", balance: "Dr." },
+            { name: "Advertising", balance: "Dr." },
+            { name: "Bank", balance: "Dr." },
+            { name: "Bank charges", balance: "Dr." },
+            { name: "Bank interest income", balance: "Cr." },
+            { name: "Bank loan", balance: "Cr." },
+            { name: "Bank overdraft", balance: "Cr." },
+            { name: "Buildings", balance: "Dr." },
+            { name: "Capital", balance: "Cr." },
+            { name: "Carriage inwards", balance: "Dr." },
+            { name: "Carriage outwards", balance: "Dr." },
+            { name: "Cash", balance: "Dr." },
+            { name: "Cleaning", balance: "Dr." },
+            { name: "Commissions expenses", balance: "Dr." },
+            { name: "Commissions income", balance: "Cr." },
+            { name: "Deposit from customers (refundable)", balance: "Cr." },
+            { name: "Deposit to suppliers (refundable)", balance: "Dr." },
+            { name: "Discounts allowed", balance: "Dr." },
+            { name: "Discounts received", balance: "Cr." },
+            { name: "Drawings", balance: "Dr." },
+            { name: "Electricity", balance: "Dr." },
+            { name: "Fixed deposit", balance: "Dr." },
+            { name: "Fixtures and fittings", balance: "Dr." },
+            { name: "General / Sundry / Office / Miscellaneous expenses", balance: "Dr." },
+            { name: "Heating and lighting", balance: "Dr." },
+            { name: "Insurance", balance: "Dr." },
+            { name: "Interest on deposit", balance: "Cr." },
+            { name: "Interest on [loan from A]", balance: "Dr." },
+            { name: "Interest on [loan to B]", balance: "Cr." },
+            { name: "Interest on overdraft", balance: "Dr." },
+            { name: "Internet charges", balance: "Dr." },
+            { name: "Inventory, as at year end", balance: "Dr." },
+            { name: "Land", balance: "Dr." },
+            { name: "Loan from C", balance: "Cr." },
+            { name: "Loan to D", balance: "Dr." },
+            { name: "Loan interest expenses", balance: "Dr." },
+            { name: "Long-term investments", balance: "Dr." },
+            { name: "Machinery", balance: "Dr." },
+            { name: "Management fees", balance: "Dr." },
+            { name: "Motor expenses", balance: "Dr." },
+            { name: "Motor repairs", balance: "Dr." },
+            { name: "Motor vehicles", balance: "Dr." },
+            { name: "Office equipment", balance: "Dr." },
+            { name: "Other payables", balance: "Cr." },
+            { name: "Other receivables", balance: "Dr." },
+            { name: "Postages", balance: "Dr." },
+            { name: "Premises", balance: "Dr." },
+            { name: "Printing and stationery", balance: "Dr." },
+            { name: "Purchases", balance: "Dr." },
+            { name: "Purchases returns", balance: "Cr." },
+            { name: "Rent and rates", balance: "Dr." },
+            { name: "Rental deposit from tenants", balance: "Cr." },
+            { name: "Rental deposit to landlords", balance: "Dr." },
+            { name: "Rental income", balance: "Cr." },
+            { name: "Repairs and maintenance", balance: "Dr." },
+            { name: "Returns inwards", balance: "Dr." },
+            { name: "Returns outwards", balance: "Cr." },
+            { name: "Revenue", balance: "Cr." },
+            { name: "Revenue returns", balance: "Dr." },
+            { name: "Sales", balance: "Cr." },
+            { name: "Sales returns", balance: "Dr." },
+            { name: "Selling and distribution costs", balance: "Dr." },
+            { name: "Short-term investments", balance: "Dr." },
+            { name: "Staff welfare and entertainment", balance: "Dr." },
+            { name: "Telecommunications", balance: "Dr." },
+            { name: "Telephone", balance: "Dr." },
+            { name: "Time / term deposit", balance: "Dr." },
+            { name: "Trade payables", balance: "Cr." },
+            { name: "Trade receivables", balance: "Dr." },
+            { name: "Travelling", balance: "Dr." },
+            { name: "Utilities", balance: "Dr." },
+            { name: "Wages and salaries", balance: "Dr." },
+            { name: "Water", balance: "Dr." }
+        ];
+
+        const holes = document.querySelectorAll('.hole');
+        const markers = document.querySelectorAll('.marker');
+        const scoreDisplay = document.getElementById('score');
+        const startImage = document.getElementById('start-image');
+        const endImage = document.getElementById('end-image');
+        const itemDisplay = document.getElementById('item-display');
+        const gameContainer = document.getElementById('game-container');
+        const resultsContainer = document.getElementById('results-container');
+        const correctAnswersDiv = document.getElementById('correct-answers');
+        const correctAnswersList = document.getElementById('correct-answers-list');
+        const wrongAnswersDiv = document.getElementById('wrong-answers');
+        const wrongAnswersList = document.getElementById('wrong-answers-list');
+        const mallet = document.getElementById('mallet');
+        const endMessage = document.getElementById('end-message');
+        const logoContainer = document.getElementById('logo-container');
+        const instructionModal = document.getElementById('instruction-modal');
+        const continueButton = document.getElementById('continue-button');
+        let score = 0;
+        let totalQuestions = 0;
+        let gameActive = false;
+        let currentItem = null;
+        let playerChoice = null;
+        let correctHole = null;
+        let wrongAnswers = [];
+        let correctAnswers = [];
+        let usedItems = [];
+
+        function getRandomItem() {
+            let availableItems = items.filter(item => !usedItems.includes(item.name));
+            if (availableItems.length === 0) return null; // End game when no items left
+            const idx = Math.floor(Math.random() * availableItems.length);
+            const selectedItem = availableItems[idx];
+            usedItems.push(selectedItem.name);
+            return selectedItem;
+        }
+
+        function showItem() {
+            if (!gameActive) return;
+            markers.forEach(marker => {
+                marker.classList.remove('up', 'party', 'playful');
+                marker.classList.add('normal');
+            });
+            playerChoice = null;
+            itemDisplay.textContent = '';
+            currentItem = getRandomItem();
+            if (!currentItem) {
+                endGame(); // End game if no more items
+                return;
+            }
+            itemDisplay.textContent = currentItem.name;
+            correctHole = currentItem.balance === 'Dr.' ? holes[0] : holes[1];
+        }
+
+        function hitMarker(e) {
+            if (!gameActive || playerChoice) return;
+            playerChoice = e.currentTarget;
+            totalQuestions++;
+            const marker = correctHole.querySelector('.marker');
+            marker.classList.add('up');
+
+            const isCorrect = playerChoice === correctHole;
+            marker.classList.remove('normal');
+            marker.classList.add(isCorrect ? 'party' : 'playful');
+            mallet.style.display = 'none';
+
+            if (isCorrect) {
+                score++;
+                correctAnswers.push({
+                    name: currentItem.name,
+                    correctBalance: currentItem.balance
+                });
+                scoreDisplay.textContent = `Score: ${score} / ${totalQuestions}`;
+            } else {
+                wrongAnswers.push({
+                    name: currentItem.name,
+                    correctBalance: currentItem.balance
+                });
+            }
+
+            setTimeout(() => {
+                marker.classList.remove('up', 'party', 'playful');
+                marker.classList.add('normal');
+                mallet.style.display = 'block';
+                scoreDisplay.textContent = `Score: ${score} / ${totalQuestions}`;
+                setTimeout(showItem, 500);
+            }, 1000);
+        }
+
+        function startGameLogic() {
+            if (gameActive) return;
+            gameActive = true;
+            score = 0;
+            totalQuestions = 0;
+            wrongAnswers = [];
+            correctAnswers = [];
+            usedItems = []; // Reset used items for new game
+            scoreDisplay.textContent = `Score: ${score} / ${totalQuestions}`;
+            startImage.classList.remove('start-image-results');
+            startImage.style.display = 'none';
+            endImage.style.display = 'block';
+            gameContainer.style.display = 'flex';
+            itemDisplay.style.display = 'block';
+            resultsContainer.style.display = 'none';
+            correctAnswersList.innerHTML = '';
+            wrongAnswersList.innerHTML = '';
+            endMessage.style.display = 'none';
+            mallet.style.display = 'block';
+            logoContainer.style.display = 'block';
+            showItem();
+        }
+
+        function showInstructionModal() {
+            instructionModal.style.display = 'flex';
+        }
+
+        function startGame() {
+            showInstructionModal();
+        }
+
+        function endGame() {
+            if (!gameActive) return;
+            gameActive = false;
+            itemDisplay.textContent = '';
+            markers.forEach(marker => {
+                marker.classList.remove('up', 'party', 'playful');
+                marker.classList.add('normal');
+            });
+            startImage.classList.add('start-image-results');
+            startImage.style.display = 'block';
+            endImage.style.display = 'none';
+            gameContainer.style.display = 'none';
+            itemDisplay.style.display = 'none';
+            mallet.style.display = 'none';
+            endMessage.style.display = 'block';
+            resultsContainer.style.display = 'flex';
+            logoContainer.style.display = 'block';
+            correctAnswersDiv.querySelector('h3').textContent = `Congrats! You've got ${correctAnswers.length} out of ${totalQuestions} correct!`;
+            if (wrongAnswers.length === 0) {
+                wrongAnswersDiv.querySelector('h3').textContent = "You missed 0. Nailed it!";
+                wrongAnswersList.innerHTML = '';
+            } else {
+                wrongAnswersDiv.querySelector('h3').textContent = `You missed ${wrongAnswers.length}. You can do better next time!`;
+                wrongAnswersList.innerHTML = wrongAnswers.map(answer =>
+                    `<li>${answer.name}: ${answer.correctBalance}</li>`
+                ).join('');
+            }
+            const percentage = totalQuestions > 0 ? (score / totalQuestions * 100) : 0;
+            if (percentage === 100) {
+                endMessage.textContent = "Congrats! You are the Dojo Master! 🙇🏻‍♂️";
+            } else if (percentage >= 90) {
+                endMessage.textContent = "You are only second to one!";
+            } else if (percentage >= 80) {
+                endMessage.textContent = "Closer to becoming the Dojo Master!";
+            } else if (percentage >= 70) {
+                endMessage.textContent = "Good job!";
+            } else if (percentage >= 50) {
+                endMessage.textContent = "Nice Try!";
+            } else {
+                endMessage.textContent = "Sadly, you need more practice";
+            }
+            if (correctAnswers.length > 0) {
+                correctAnswersList.innerHTML = correctAnswers.map(answer =>
+                    `<li>${answer.name}: ${answer.correctBalance}</li>`
+                ).join('');
+            } else {
+                correctAnswersList.innerHTML = '<li>No correct answers.</li>';
+            }
+        }
+
+        function moveMallet(e) {
+            if (!gameActive) return;
+            const touch = e.touches ? e.touches[0] : e;
+            mallet.style.left = `${touch.clientX - 50}px`;
+            mallet.style.top = `${touch.clientY - 50}px`;
+            mallet.style.transform = 'rotate(45deg)';
+            setTimeout(() => {
+                mallet.style.transform = 'rotate(0deg)';
+            }, 100);
+        }
+
+        holes.forEach(hole => {
+            hole.addEventListener('click', hitMarker);
+            hole.addEventListener('touchstart', hitMarker, { passive: false });
+        });
+        startImage.addEventListener('click', startGame);
+        continueButton.addEventListener('click', () => {
+            instructionModal.style.display = 'none';
+            startGameLogic();
+        });
+        endImage.addEventListener('click', endGame);
+        document.addEventListener('mousemove', moveMallet);
+        document.addEventListener('touchmove', moveMallet, { passive: false });
+    </script>
+</body>
+</html>
