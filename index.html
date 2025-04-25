@@ -515,10 +515,10 @@
         let usedItems = [];
 
         // Initialize audio settings
-        backgroundMusic.volume = 0.167; // Set to 1/3 of original 0.5
+        backgroundMusic.volume = 0.04175; // 25% of current 0.167
         koSound.playbackRate = 1.3;
-        ohnoSound.playbackRate = 1.69; // Updated to 1.3x of current speed (1.3 * 1.3 = 1.69)
-        ohnoSound.volume = 1.0; // Set to max volume (2x of default 1.0, capped at 1.0)
+        ohnoSound.playbackRate = 1.69;
+        ohnoSound.volume = 1.0; // 300% of current 1.0, capped at 1.0
 
         function getRandomItem() {
             let availableItems = items.filter(item => !usedItems.includes(item.name));
@@ -573,7 +573,7 @@
                     name: currentItem.name,
                     correctBalance: currentItem.balance
                 });
-                ohnoSound.currentTime = 0.2; // Skip first 0.2 seconds
+                ohnoSound.currentTime = 0.1; // Skip first 0.1 seconds
                 ohnoSound.play();
             }
 
@@ -601,7 +601,7 @@
             });
         }
 
-        function startGameLogic() {
+        functionCLEAR startGameLogic() {
             if (gameActive) return;
             gameActive = true;
             score = 0;
@@ -627,7 +627,7 @@
         }
 
         function showInstructionModal() {
-            document.getElementById('total-questions').textContent = items.length;
+            document.getElementById('total-questions').innerHTML = '<span style="font-weight: bold; color: red;">87</span>';
             instructionModal.style.display = 'flex';
         }
 
