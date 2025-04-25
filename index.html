@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -235,7 +236,7 @@
             color: #e68434;
             text-align: center;
             margin-top: 10px;
-            margin-left: 120px;
+            margin-left: 0;
             display: none;
         }
         #logo-container {
@@ -295,7 +296,7 @@
                 font-size: 0.9em;
             }
             #end-message {
-                margin-left: 100px;
+                margin-left: 0;
             }
         }
     </style>
@@ -309,6 +310,7 @@
     </div>
     <h1>Be a Dojo Master</h1>
     <div id="score">Score: 0 / 0</div>
+    <div id="end-message">Nice Try!</div>
     <img id="start-image" src="https://i.postimg.cc/MH3ZSy7k/sumo.png" alt="Start Game - Undefeated Sumo">
     <img id="end-image" src="https://i.postimg.cc/xj58BDFM/exit.webp" alt="End Game">
     <div id="item-display"></div>
@@ -331,9 +333,10 @@
         </div>
     </div>
     <div id="mallet"></div>
-    <div id="end-message">Nice Try!</div>
     <div id="logo-container">
-        <img id="logo" src="https://i.postimg.cc/0yMN6650/bafs-dojo.jpg" alt="BAFS Dojo Logo">
+        <a href="https://www.instagram.com/bafsdojo?igsh=MXhnNW9zN3JjMXJoMg%3D%3D&utm_source=qr" target="_blank">
+            <img id="logo" src="https://i.postimg.cc/0yMN6650/bafs-dojo.jpg" alt="BAFS Dojo Logo">
+        </a>
     </div>
     <!-- Audio elements for music and sound effects -->
     <audio id="background-music" loop>
@@ -406,7 +409,7 @@
             { name: "Returns inwards", balance: "Dr." },
             { name: "Returns outwards", balance: "Cr." },
             { name: "Revenue", balance: "Cr." },
-            { name: "Revenue returns", balance: "Dr." },
+            {殖: "Revenue returns", balance: "Dr." },
             { name: "Sales", balance: "Cr." },
             { name: "Sales returns", balance: "Dr." },
             { name: "Selling and distribution costs", balance: "Dr." },
@@ -417,7 +420,7 @@
             { name: "Time / term deposit", balance: "Dr." },
             { name: "Trade payables", balance: "Cr." },
             { name: "Trade receivables", balance: "Dr." },
-            { name: "Travelling", balance: "Dr." },
+            { name: "Travресс: "Travelling", balance: "Dr." },
             { name: "Utilities", balance: "Dr." },
             { name: "Wages and salaries", balance: "Dr." },
             { name: "Water", balance: "Dr." }
@@ -580,10 +583,10 @@
             backgroundMusic.currentTime = 0; // Reset to start
             correctAnswersDiv.querySelector('h3').textContent = `Congrats! You've got ${correctAnswers.length} out of ${totalQuestions} correct!`;
             if (wrongAnswers.length === 0) {
-                wrongAnswersDiv.querySelector('h3').textContent = "You missed 0. Nailed it!";
+                wrongAnswersDiv.querySelector('h3').textContent = "You missed 0.\nYou can do better next time!";
                 wrongAnswersList.innerHTML = '';
             } else {
-                wrongAnswersDiv.querySelector('h3').textContent = `You missed ${wrongAnswers.length}. You can do better next time!`;
+                wrongAnswersDiv.querySelector('h3').textContent = `You missed ${wrongAnswers.length}.\nYou can do better next time!`;
                 wrongAnswersList.innerHTML = wrongAnswers.map(answer =>
                     `<li>${answer.name}: ${answer.correctBalance}</li>`
                 ).join('');
@@ -637,3 +640,4 @@
     </script>
 </body>
 </html>
+```
