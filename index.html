@@ -199,6 +199,7 @@
             overflow-y: auto;
             max-height: 300px;
             flex: 1;
+            position: relative;
         }
         #correct-answers {
             margin-right: 5px;
@@ -209,6 +210,7 @@
         #correct-answers h3, #wrong-answers h3 {
             margin: 0 0 5px;
             font-size: 1em;
+            margin-right: 30px;
         }
         #correct-answers ul, #wrong-answers ul {
             list-style-type: decimal;
@@ -247,6 +249,18 @@
         #logo {
             width: 90px;
             height: auto;
+        }
+        #copy-icon {
+            width: 20px;
+            height: 20px;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        #copy-icon:hover {
+            opacity: 0.8;
         }
         @media (max-width: 360px) {
             .hole {
@@ -297,6 +311,12 @@
             #end-message {
                 margin-left: 100px;
             }
+            #copy-icon {
+                width: 18px;
+                height: 18px;
+                top: 8px;
+                right: 8px;
+            }
         }
     </style>
 </head>
@@ -327,6 +347,7 @@
         </div>
         <div id="wrong-answers">
             <h3></h3>
+            <img id="copy-icon" src="https://i.postimg.cc/fTZLr9yy/copy-grey.png" alt="Copy Incorrect Answers">
             <ul id="wrong-answers-list"></ul>
         </div>
     </div>
@@ -442,6 +463,7 @@
         const logoContainer = document.getElementById('logo-container');
         const instructionModal = document.getElementById('instruction-modal');
         const continueButton = document.getElementById('continue-button');
+        const copyIcon = document.getElementById('copy-icon');
         // Audio elements
         const backgroundMusic = document.getElementById('background-music');
         const koSound = document.getElementById('ko-sound');
@@ -525,6 +547,19 @@
                 scoreDisplay.textContent = `Score: ${score} / ${totalQuestions}`;
                 setTimeout(showItem, 500);
             }, 1000);
+        }
+
+        function copyWrongAnswers() {
+            if (wrongAnswers.length === 0) return;
+            const textToCopy = wrongAnswers.map((answer, index) =>
+                `${index + 1}. ${answer.name}: ${answer.correctBalance}`
+            ).join('\n');
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                // Optional: Provide feedback (e.g., alert or visual indication)
+                console.log('Incorrect answers copied to clipboard');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
         }
 
         function startGameLogic() {
@@ -636,6 +671,7 @@
         endImage.addEventListener('click', endGame);
         document.addEventListener('mousemove', moveMallet);
         document.addEventListener('touchmove', moveMallet, { passive: false });
+        copyIcon.addEventListener('click', copyWrongAnswers);
     </script>
 </body>
 </html>
