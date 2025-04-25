@@ -174,7 +174,7 @@
             left: 50%;
             transform: translateX(-50%);
             font-size: 1em;
-            font-weight: bold;
+            font consentito: bold;
         }
         #hole2::before {
             content: 'Cr.';
@@ -236,9 +236,10 @@
             font-weight: bold;
             color: #e68434;
             text-align: center;
-            margin-top: 10px;
-            margin-left: 120px;
+            margin: 10px 0;
             display: none;
+            width: 100%;
+            max-width: 360px;
         }
         #logo-container {
             position: fixed;
@@ -309,7 +310,7 @@
                 font-size: 0.9em;
             }
             #end-message {
-                margin-left: 100px;
+                max-width: 300px;
             }
             #copy-icon {
                 width: 18px;
@@ -329,6 +330,7 @@
     </div>
     <h1>Be a Dojo Master</h1>
     <div id="score">Score: 0 / 0</div>
+    <div id="end-message">Nice Try!</div>
     <img id="start-image" src="https://i.postimg.cc/MH3ZSy7k/sumo.png" alt="Start Game - Undefeated Sumo">
     <img id="end-image" src="https://i.postimg.cc/xj58BDFM/exit.webp" alt="End Game">
     <div id="item-display"></div>
@@ -352,7 +354,6 @@
         </div>
     </div>
     <div id="mallet"></div>
-    <div id="end-message">Nice Try!</div>
     <div id="logo-container">
         <a href="https://www.instagram.com/bafsdojo?igsh=MXhnNW9zN3JjMXJoMg%3D%3D&utm_source=qr" target="_blank">
             <img id="logo" src="https://i.postimg.cc/0yMN6650/bafs-dojo.jpg" alt="BAFS Dojo Logo">
