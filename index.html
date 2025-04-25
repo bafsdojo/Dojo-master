@@ -573,7 +573,7 @@
                     name: currentItem.name,
                     correctBalance: currentItem.balance
                 });
-                ohnoSound.currentTime = 0.5; // Skip first 0.5 seconds
+                ohnoSound.currentTime = 0.2; // Skip first 0.2 seconds
                 ohnoSound.play();
             }
 
@@ -660,15 +660,15 @@
                 wrongAnswersDiv.querySelector('h3').textContent = "You missed 0. Nailed it!";
                 wrongAnswersList.innerHTML = '';
             } else {
-                wrongAnswersDiv.querySelector('h3').innerHTML = `You missed ${wrongAnswers.length}.<br>You can do better next time!`;
+                wrongAnswersDiv.querySelector('h3').innerHTML = `You missed ${wrongAnswers.length}.<br>Can do better next time!`;
                 wrongAnswersList.innerHTML = wrongAnswers.map(answer =>
                     `<li>${answer.name}: ${answer.correctBalance}</li>`
                 ).join('');
             }
             const percentage = totalQuestions > 0 ? (score / totalQuestions * 100) : 0;
-            if (percentage === 100) {
+            if (percentage === 100 && score === items.length) {
                 endMessage.textContent = "Congrats! You are the Dojo Master! 🙇🏻‍♂️";
-            } else if (percentage >= 90) {
+            } else if (percentage === 100 || percentage >= 90) {
                 endMessage.textContent = "You are only second to one!";
             } else if (percentage >= 80) {
                 endMessage.textContent = "Closer to becoming the Dojo Master!";
